@@ -1,6 +1,6 @@
 # miraitowa-site
 
-个人技术网站的最小 Demo。当前只有主页、博客/项目/关于占位页面和自定义 404，用于验证本地开发、静态构建和 Cloudflare 发布流程。
+个人技术网站的最小 Demo。当前包含主页、公开项目展示、博客/关于占位页面和自定义 404，用于验证本地开发、静态构建和 Cloudflare 发布流程。
 
 ## 本地开发
 
@@ -25,7 +25,9 @@ npm run preview
 - `src/config/site.ts`：网站名称、简介、GitHub 和导航。
 - `src/layouts/BaseLayout.astro`：共享 HTML、导航和页脚。
 - `src/pages/index.astro`：主页。
-- `src/pages/[section].astro`：静态生成三个占位页面。
+- `src/pages/[section].astro`：静态生成博客和关于占位页面。
+- `src/pages/projects.astro`：按方向展示公开项目。
+- `src/data/projects.ts`：集中维护项目名称、简介、分类、技术标签与链接。
 - `src/pages/404.astro`：自定义 404。
 - `src/styles/global.css`：全局样式和移动端适配。
 - `wrangler.jsonc`：发布 `dist/` 的纯静态 Worker 配置，没有 `main` 入口。
@@ -56,6 +58,8 @@ npm run deploy
 当前应用不需要环境变量。不要提交任何 Token、密码或 `.env`；Cloudflare 账户授权和 GitHub Integration 在平台中配置。
 
 ## 后续
+
+项目内容根据 GitHub 公开仓库简介与 README 整理，核对日期为 2026-10-04。私有仓库不在展示范围内。列表为本地静态数据，不会自动同步；新增或修改项目请编辑 `src/data/projects.ts`，更新后构建并推送。历史项目单独分组，项目主页仅在已知链接时提供。
 
 流程验证后再增加 Content Collections、Markdown / MDX、文章阅读页、主题切换、SEO、RSS、Sitemap、Pagefind 与 Giscus。本 Demo 暂未实现这些功能，也没有虚构项目或文章内容。
 
