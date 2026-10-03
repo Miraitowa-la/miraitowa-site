@@ -1,0 +1,36 @@
+---
+import { site } from '../config/site';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+const { title, description = site.description } = Astro.props;
+---
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title} · {site.name}</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳转到主要内容</a>
+    <header class="site-header container">
+      <a class="brand" href="/">{site.name}<span class="brand-dot">.</span></a>
+      <nav aria-label="主导航">
+        {site.navigation.map(({ label, href }) => (
+          <a href={href} aria-current={Astro.url.pathname === href ? 'page' : undefined}>{label}</a>
+        ))}
+      </nav>
+    </header>
+    <main id="main" class="container"><slot /></main>
+    <footer class="site-footer container">
+      <span>© {new Date().getFullYear()} {site.name}</span>
+      <a href={site.github}>GitHub ↗</a>
+    </footer>
+  </body>
+</html>

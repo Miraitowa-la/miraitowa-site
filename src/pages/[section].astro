@@ -1,0 +1,21 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+export function getStaticPaths() {
+  return [
+    { params: { section: 'blog' }, props: { title: '技术博客', description: '学习笔记、问题记录与实践经验。' } },
+    { params: { section: 'projects' }, props: { title: '开源项目', description: '这里将展示我的项目与作品。' } },
+    { params: { section: 'about' }, props: { title: '关于我', description: '这里将介绍我的技术方向与开发经历。' } },
+  ];
+}
+const { title, description } = Astro.props;
+---
+<BaseLayout title={title} description={description}>
+  <section class="placeholder">
+    <p class="eyebrow">保持探索 / KEEP EXPLORING</p>
+    <h1>{title}</h1>
+    <p>{description}</p>
+    <div class="empty-state"><span aria-hidden="true">＋</span><h2>内容准备中</h2><p>先留一个位置，稍后在这里分享。</p></div>
+    <a class="button" href="/">← 返回首页</a>
+  </section>
+</BaseLayout>
