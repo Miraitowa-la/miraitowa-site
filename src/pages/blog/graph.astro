@@ -1,0 +1,8 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import KnowledgeGraph from '../../components/KnowledgeGraph.astro';
+import { getNotes } from '../../lib/notes.mjs';
+import '../../styles/blog.css';
+const { graph } = await getNotes();
+---
+<BaseLayout title="知识图谱"><section class="projects-intro surface"><p class="eyebrow">KNOWLEDGE GRAPH</p><h1>知识图谱</h1><p>每个节点是一篇文章，每条连线代表正文中的引用。</p><div class="actions"><a class="button" href="/blog/">← 文章列表</a></div></section><section class="surface graph-panel"><KnowledgeGraph graph={graph} /></section></BaseLayout>

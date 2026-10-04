@@ -1,0 +1,24 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import KnowledgeGraph from '../../components/KnowledgeGraph.astro';
+import MermaidDiagrams from '../../components/MermaidDiagrams.astro';
+import { getNotes } from '../../lib/notes.mjs';
+import 'katex/dist/katex.min.css';
+import '../../styles/blog.css';
+export async function getStaticPaths() {
+  const { notes, graph } = await getNotes();
+  return notes.map((note) => ({ params: { slug: note.slug }, props: { note, graph } }));
+}
+const { note, graph } = Astro.props;
+const neighbours = new Set([note.slug, ...note.links, ...note.backlinks.map((n) => n.slug)]);
+const local = { nodes: graph.nodes.filter((n) => neighbours.has(n.id)), edges: graph.edges.filter((e) => neighbours.has(e.source) && neighbours.has(e.target)) };
+---
+<BaseLayout title={note.title} description={note.description}>
+  <article class="surface note-article"><a class="note-meta" href="/blog/">← 全部文章</a><header><p class="eyebrow">{note.category}</p><h1>{note.title}</h1><p class="note-meta"><time datetime={note.date}>{note.date}</time> · {note.tags.join(' / ')}</p><p>{note.description}</p></header>
+  {note.headings.length > 0 && <details class="note-toc" open><summary>文章目录</summary><nav aria-label="文章目录"><ul>{note.headings.map((heading) => <li style={`padding-left:${(heading.depth - 1) * 12}px`}><a href={`#${heading.slug}`}>{heading.text}</a></li>)}</ul></nav></details>}
+  <div class="prose" set:html={note.html} />
+  </article>
+  <section class="surface note-relations"><h2>引用这篇文章</h2>{note.backlinks.length ? <ul>{note.backlinks.map((n) => <li><a href={n.url}>{n.title} →</a></li>)}</ul> : <p class="note-meta">暂时没有其他文章引用这篇笔记。</p>}</section>
+  <section class="surface note-relations"><div class="section-heading"><h2>附近的知识</h2><a href="/blog/graph/">全局图谱 →</a></div><KnowledgeGraph graph={local} current={note.slug} /></section>
+  {note.hasMermaid && <MermaidDiagrams />}
+</BaseLayout>

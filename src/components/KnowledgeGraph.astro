@@ -1,0 +1,87 @@
+---
+interface Props { graph: { nodes: { id: string; title: string; category: string; url: string }[]; edges: { source: string; target: string }[] }; current?: string }
+const { graph, current = '' } = Astro.props;
+---
+<div class="knowledge-graph" data-graph={JSON.stringify(graph)} data-current={current}>
+  <div class="graph-tools"><label>查找节点<input class="graph-search" type="search" placeholder="文章标题" /></label><label>分类<select class="graph-category"><option value="">全部分类</option>{[...new Set(graph.nodes.map((n) => n.category))].map((category) => <option>{category}</option>)}</select></label><button class="button graph-reset" type="button">重置视图</button></div>
+  <p class="note-meta">拖动空白处平移 · 滚轮缩放 · 拖动节点 · 点击标题阅读</p>
+  <svg class="graph-canvas" viewBox="0 0 800 460" role="group" aria-label="文章关联图谱"></svg>
+  <p class="graph-status note-meta" aria-live="polite"></p>
+  <details class="graph-directory"><summary>文章链接（列表）</summary><ul>{graph.nodes.map((node) => <li><a href={node.url}>{node.title}</a></li>)}</ul></details>
+</div>
+<script>
+  import { forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide } from 'd3-force';
+  const ns = 'http://www.w3.org/2000/svg';
+  function svgElement(name: string, attrs: Record<string, string>) {
+    const el = document.createElementNS(ns, name);
+    for (const [key, value] of Object.entries(attrs)) el.setAttribute(key, value);
+    return el;
+  }
+  for (const container of document.querySelectorAll<HTMLElement>('.knowledge-graph')) {
+    const graph = JSON.parse(container.dataset.graph!);
+    const svg = container.querySelector<SVGSVGElement>('svg')!;
+    const nodes = graph.nodes.map((n: any) => ({ ...n }));
+    const edges = graph.edges.map((e: any) => ({ ...e }));
+    const layer = svgElement('g', {}); svg.append(layer);
+    const lines = edges.map(() => { const line = svgElement('line', { class: 'graph-edge' }); layer.append(line); return line; });
+    const categories = [...new Set(nodes.map((n: any) => n.category))];
+    const groups = nodes.map((node: any) => {
+      const group = svgElement('g', { class: 'graph-node' });
+      const degree = edges.filter((e: any) => e.source === node.id || e.target === node.id).length;
+      const circle = svgElement('circle', { r: String(node.id === container.dataset.current ? 13 : Math.min(7 + degree * 1.5, 16)), fill: `hsl(${210 + categories.indexOf(node.category) * 48} 65% 65%)` });
+      const link = svgElement('a', { href: node.url, 'aria-label': `阅读 ${node.title}` });
+      const text = svgElement('text', { y: '30', 'text-anchor': 'middle' }); text.textContent = node.title; link.append(text);
+      const title = svgElement('title', {}); title.textContent = node.title;
+      group.append(circle, link, title); layer.append(group);
+      group.addEventListener('pointerenter', () => {
+        const related = new Set([node.id, ...edges.filter((e: any) => e.source.id === node.id || e.target.id === node.id).flatMap((e: any) => [e.source.id, e.target.id])]);
+        groups.forEach((g: Element, i: number) => g.classList.toggle('graph-muted', !related.has(nodes[i].id)));
+      });
+      group.addEventListener('pointerleave', () => groups.forEach((g: Element) => g.classList.remove('graph-muted')));
+      circle.addEventListener('click', () => { if (!moved) location.href = node.url; });
+      return group;
+    });
+    const simulation = forceSimulation(nodes).force('link', forceLink(edges).id((n: any) => n.id).distance(115)).force('charge', forceManyBody().strength(-420)).force('center', forceCenter(400, 230)).force('collide', forceCollide(48));
+    // Settle once; only resume while a reader drags a node.
+    simulation.stop(); simulation.tick(180);
+    function draw() {
+      nodes.forEach((n: any, i: number) => { n.x = Math.max(60, Math.min(740, n.x)); n.y = Math.max(40, Math.min(410, n.y)); groups[i].setAttribute('transform', `translate(${n.x},${n.y})`); });
+      edges.forEach((e: any, i: number) => { for (const [key, value] of Object.entries({ x1: e.source.x, y1: e.source.y, x2: e.target.x, y2: e.target.y })) lines[i].setAttribute(key, String(value)); });
+    }
+    draw(); simulation.on('tick', draw);
+    let scale = 1, x = 0, y = 0, active: any = null, start: any, moved = false;
+    const view = () => layer.setAttribute('transform', `translate(${x},${y}) scale(${scale})`);
+    function point(event: PointerEvent | WheelEvent) {
+      const p = svg.createSVGPoint(); p.x = event.clientX; p.y = event.clientY;
+      return p.matrixTransform(svg.getScreenCTM()!.inverse());
+    }
+    svg.addEventListener('wheel', (event) => {
+      event.preventDefault(); const p = point(event); const next = Math.min(3, Math.max(.4, scale * (event.deltaY > 0 ? .9 : 1.1)));
+      x = p.x - (p.x - x) * next / scale; y = p.y - (p.y - y) * next / scale; scale = next; view();
+    }, { passive: false });
+    svg.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0 || (event.target as Element).closest('a')) return;
+      const index = groups.indexOf((event.target as Element).closest('.graph-node'));
+      active = index >= 0 ? nodes[index] : null; start = { p: point(event), x, y }; moved = false;
+      if (active) { active.fx = active.x; active.fy = active.y; simulation.alphaTarget(.15).restart(); }
+      svg.setPointerCapture(event.pointerId);
+    });
+    svg.addEventListener('pointermove', (event) => {
+      if (!start) return; const p = point(event); if (Math.hypot(p.x - start.p.x, p.y - start.p.y) > 4) moved = true;
+      if (active) { active.fx = (p.x - x) / scale; active.fy = (p.y - y) / scale; }
+      else { x = start.x + p.x - start.p.x; y = start.y + p.y - start.p.y; view(); }
+    });
+    function release() { if (active) { active.fx = null; active.fy = null; simulation.alphaTarget(0); } active = null; start = null; }
+    svg.addEventListener('pointerup', release); svg.addEventListener('pointercancel', release);
+    container.querySelector('.graph-reset')!.addEventListener('click', () => { x = y = 0; scale = 1; view(); });
+    const search = container.querySelector<HTMLInputElement>('.graph-search')!;
+    const category = container.querySelector<HTMLSelectElement>('.graph-category')!;
+    function filter() {
+      const visible = new Set(nodes.filter((n: any) => n.title.toLowerCase().includes(search.value.trim().toLowerCase()) && (!category.value || n.category === category.value)).map((n: any) => n.id));
+      groups.forEach((group: Element, i: number) => (group as SVGElement).style.display = visible.has(nodes[i].id) ? '' : 'none');
+      lines.forEach((line: Element, i: number) => (line as SVGElement).style.display = visible.has(edges[i].source.id) && visible.has(edges[i].target.id) ? '' : 'none');
+      container.querySelector('.graph-status')!.textContent = `${visible.size} 篇文章 · ${edges.filter((e: any) => visible.has(e.source.id) && visible.has(e.target.id)).length} 条引用`;
+    }
+    search.addEventListener('input', filter); category.addEventListener('change', filter); filter();
+  }
+</script>

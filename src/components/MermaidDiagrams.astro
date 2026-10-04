@@ -1,0 +1,18 @@
+<script>
+  async function renderDiagrams() {
+    const blocks = [...document.querySelectorAll<HTMLElement>('.mermaid-source')];
+    if (!blocks.length) return;
+    const { default: mermaid } = await import('mermaid');
+    mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme: 'neutral' });
+    for (const [index, block] of blocks.entries()) {
+      try {
+        const { svg } = await mermaid.render(`note-diagram-${index}`, block.textContent || '');
+        const figure = document.createElement('figure'); figure.className = 'mermaid-diagram'; figure.setAttribute('aria-label', 'Mermaid 图表');
+        figure.innerHTML = svg; block.replaceWith(figure);
+      } catch {
+        const message = document.createElement('p'); message.className = 'note-meta'; message.textContent = '图表未能渲染，下面保留原始代码。'; block.before(message);
+      }
+    }
+  }
+  renderDiagrams();
+</script>

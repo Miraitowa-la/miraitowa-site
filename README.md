@@ -1,6 +1,6 @@
 # miraitowa-site
 
-个人技术网站的最小 Demo。当前包含主页、公开项目展示、博客/关于占位页面和自定义 404，用于验证本地开发、静态构建和 Cloudflare 发布流程。
+个人技术网站。包含主页、公开项目展示、Markdown 知识库博客、关于占位页面和自定义 404。全部页面静态生成，通过 Cloudflare Workers Static Assets 发布。
 
 ## 本地开发
 
@@ -27,7 +27,17 @@ npm run preview
 - `src/components/ProfileSidebar.astro`：个人信息、项目分类和技术关键词侧栏。
 - `src/components/ProjectCard.astro`：首页和项目页共用的项目卡片。
 - `src/pages/index.astro`：主页。
-- `src/pages/[section].astro`：静态生成博客和关于占位页面。
+- `src/pages/[section].astro`：静态生成关于占位页面。
+- `content/notes/`：准备公开的 Obsidian Markdown 笔记与附件。
+- `src/lib/notes.mjs`：解析笔记、转换双链/附件、生成目录、反向链接和图谱数据。
+- `src/pages/blog/index.astro`：文章列表、标题/摘要/标签搜索和分类筛选。
+- `src/pages/blog/[slug].astro`：文章阅读、目录、反向链接和局部图谱。
+- `src/pages/blog/graph.astro`：全局知识图谱。
+- `src/pages/blog-assets/[...asset].ts`：构建时输出公开文章引用的本地图片，不是运行时接口。
+- `src/components/KnowledgeGraph.astro`：图谱的布局、拖动、缩放与筛选；附有普通文章链接列表。
+- `src/components/MermaidDiagrams.astro`：仅在有 Mermaid 的文章中加载图表渲染。
+- `src/styles/blog.css`：文章排版、目录、图谱和搜索控件样式。
+- `tests/notes.test.mjs`：验证链接解析、图片、图谱、公式与公开范围。
 - `src/pages/projects.astro`：按方向展示公开项目。
 - `src/data/projects.ts`：集中维护项目名称、简介、分类、技术标签与链接。
 - `src/pages/404.astro`：自定义 404。
@@ -65,7 +75,52 @@ npm run deploy
 
 项目内容根据 GitHub 公开仓库简介与 README 整理，核对日期为 2026-10-04。私有仓库不在展示范围内。列表为本地静态数据，不会自动同步；新增或修改项目请编辑 `src/data/projects.ts`，更新后构建并推送。历史项目单独分组，项目主页仅在已知链接时提供。
 
-流程验证后再增加 Content Collections、Markdown / MDX、文章阅读页、SEO、RSS、Sitemap、Pagefind 与 Giscus。本 Demo 暂未实现这些功能，也没有虚构项目或文章内容。
+博客已实现 Markdown 阅读与知识关联。RSS、Sitemap、全文搜索、评论与 MDX 暂未实现。示例文章明确标注为功能演示，不代表个人项目成果。
+
+## Obsidian 笔记发布
+
+将准备公开的 Markdown 文件与附件复制到 `content/notes/`，可以保留文件夹结构。不需要复制 `.obsidian/`。上传指复制进本地项目并提交 Git，当前没有网页上传后台。
+
+每篇公开笔记顶部填写：
+
+```yaml
+---
+title: 我的技术笔记
+slug: my-technical-note
+date: 2026-10-04
+description: 一句话摘要
+category: 嵌入式
+tags: [ESP32, SPI]
+aliases: [可选别名]
+publish: true
+---
+```
+
+`slug` 使用唯一的小写英文、数字与短横线，保持不变即可保留文章网址；`graph` 为保留值。缺少 `publish: true` 或设置 `draft: true` 的文章不会发布。不要把私密笔记放进公开 Git 仓库：页面排除不等于仓库私密。
+
+支持以下内容：
+
+- 普通 Markdown、表格、代码块、基础 Obsidian 提示块。
+- `[[笔记]]`、`[[目录/笔记]]`、`[[笔记|显示文字]]`、`[[笔记#标题]]`，以及指向 `.md` 的标准 Markdown 链接。
+- `![[图片.png]]`、`![[图片.png|600]]` 和 `![说明](相对路径.png)`。附件可集中放在 `content/notes/附件/`，只输出公开笔记引用到的图片；支持 PNG/JPEG/GIF/WebP/AVIF/SVG，不自动压缩。
+- `$行内公式$` 与 `$$独立公式$$`，使用 KaTeX 在构建时生成排版。
+- `mermaid` 代码块在浏览器中绘制图表；断网或渲染失败时保留原始代码。图表采用浅色画布，以保证深色主题下也清晰。
+
+双链先匹配根目录路径，再匹配当前笔记的相对路径；省略目录时仅在文件名或别名唯一时解析。重名请补充目录。未公开、缺失、歧义的目标或不存在的标题会在构建终端提示，正文保留文字，不生成死链接。代码块和行内代码中的双链不参与图谱。
+
+每篇公开文章是一个节点，正文指向其他文章的链接是有向引用；重复引用合并，反向链接自动生成。同标签不会自动产生连线。局部图谱显示当前文章及直接引用它/被它引用的文章。支持拖动节点、平移、滚轮缩放、分类和标题筛选；点击节点或标题阅读文章。
+
+暂不支持整篇笔记嵌入、块引用、嵌套章节路径、Dataview、Excalidraw 源文件和 Canvas。手绘图可以先导出 SVG/PNG。文章内原始 HTML 不直接执行。
+
+本地运行 `npm run dev` 后，在 `/blog/` 阅读；修改笔记后刷新查看，增删路由必要时重启开发服务。发布前执行：
+
+```powershell
+npm test
+npm run build
+npm run preview
+```
+
+目前含 3 篇明确标注的示例笔记，可以逐步替换为你的实际内容。提交本地 Git 不会更新线上网站；推送生产分支才触发 Cloudflare 发布。
 
 ## 许可证
 
