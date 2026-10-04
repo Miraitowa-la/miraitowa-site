@@ -57,12 +57,34 @@ const { title, description = site.description } = Astro.props;
           toggle.title = label;
         };
         updateLabel();
-        toggle.addEventListener('click', () => {
+        let switching = false;
+        toggle.addEventListener('click', async () => {
+          if (switching) return;
           const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
           manual = true;
-          document.documentElement.dataset.theme = theme;
-          try { localStorage.setItem('miraitowa-theme', theme); } catch {}
-          updateLabel();
+          const root = document.documentElement;
+          const applyTheme = () => {
+            root.dataset.theme = theme;
+            try { localStorage.setItem('miraitowa-theme', theme); } catch {}
+            updateLabel();
+          };
+          if (!document.startViewTransition || matchMedia('(prefers-reduced-motion: reduce)').matches) { applyTheme(); return; }
+          const bounds = toggle.getBoundingClientRect();
+          const x = bounds.left + bounds.width / 2;
+          const y = bounds.top + bounds.height / 2;
+          const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+          root.style.setProperty('--theme-reveal-x', `${x}px`);
+          root.style.setProperty('--theme-reveal-y', `${y}px`);
+          root.style.setProperty('--theme-reveal-radius', `${radius}px`);
+          root.dataset.themeTransition = 'true';
+          switching = true;
+          try { await document.startViewTransition(applyTheme).finished; }
+          catch { applyTheme(); }
+          finally {
+            switching = false;
+            delete root.dataset.themeTransition;
+            ['--theme-reveal-x', '--theme-reveal-y', '--theme-reveal-radius'].forEach((property) => root.style.removeProperty(property));
+          }
         });
         system.addEventListener('change', (event) => {
           if (!manual) {
