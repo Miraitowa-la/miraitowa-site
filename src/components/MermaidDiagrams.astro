@@ -1,19 +1,61 @@
 <script>
   import mermaid from 'mermaid';
+  const diagrams = [...document.querySelectorAll<HTMLElement>('.mermaid-source')].map((block) => ({
+    source: block.textContent || '',
+    block: block.closest<HTMLElement>('.mermaid-block')!,
+    figure: document.createElement('figure'),
+    downloadUrl: '',
+  }));
+  let rendering = false;
+  let pending = false;
+  let revision = 0;
   async function renderDiagrams() {
-    const blocks = [...document.querySelectorAll<HTMLElement>('.mermaid-source')];
-    if (!blocks.length) return;
-    mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme: 'neutral' });
-    for (const [index, block] of blocks.entries()) {
-      try {
-        const { svg } = await mermaid.render(`note-diagram-${index}`, block.textContent || '');
-        const figure = document.createElement('figure'); figure.className = 'mermaid-diagram'; figure.setAttribute('aria-label', 'Mermaid 图表');
-        figure.innerHTML = svg; block.closest('.mermaid-block')!.replaceWith(figure);
-      } catch {
-        block.closest('.mermaid-block')!.querySelector('[role="status"]')!.textContent = '图表未能渲染，可展开查看源码。';
-        block.closest('details')!.open = true;
+    if (!diagrams.length) return;
+    pending = true;
+    if (rendering) return;
+    rendering = true;
+    await document.fonts.ready;
+    while (pending) {
+      pending = false;
+      const dark = document.documentElement.dataset.theme === 'dark';
+      const styles = getComputedStyle(document.documentElement);
+      mermaid.initialize({
+        startOnLoad: false, securityLevel: 'strict', theme: dark ? 'dark' : 'default',
+        darkMode: dark, htmlLabels: false, fontFamily: styles.fontFamily,
+      });
+      revision++;
+      for (const [index, diagram] of diagrams.entries()) {
+        try {
+          const { svg } = await mermaid.render(`note-diagram-${revision}-${index}`, diagram.source);
+          const { figure } = diagram;
+          figure.className = 'mermaid-diagram';
+          figure.setAttribute('aria-label', 'Mermaid 图表');
+          figure.innerHTML = svg;
+          const graphic = figure.querySelector('svg')!;
+          graphic.style.backgroundColor = styles.getPropertyValue('--bg').trim();
+          const exported = graphic.cloneNode(true) as SVGSVGElement;
+          exported.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+          exported.setAttribute('width', String(graphic.viewBox.baseVal.width));
+          exported.setAttribute('height', String(graphic.viewBox.baseVal.height));
+          if (diagram.downloadUrl) URL.revokeObjectURL(diagram.downloadUrl);
+          diagram.downloadUrl = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(exported)], { type: 'image/svg+xml;charset=utf-8' }));
+          const zoom = document.createElement('button');
+          zoom.type = 'button'; zoom.className = 'image-zoom diagram-zoom';
+          zoom.setAttribute('aria-label', `放大图片：Mermaid 图表 ${index + 1}`);
+          graphic.before(zoom); zoom.append(graphic);
+          zoom.addEventListener('click', () => document.dispatchEvent(new CustomEvent('article-image-preview', {
+            detail: { src: diagram.downloadUrl, alt: `Mermaid 图表 ${index + 1}`, filename: `流程图-${index + 1}.svg` },
+          })));
+          if (!figure.isConnected) diagram.block.replaceWith(figure);
+        } catch {
+          diagram.figure.replaceWith(diagram.block);
+          diagram.block.querySelector('[role="status"]')!.textContent = '图表未能渲染，可展开查看源码。';
+          diagram.block.querySelector('details')!.open = true;
+        }
       }
     }
+    rendering = false;
   }
+  new MutationObserver(renderDiagrams).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   renderDiagrams();
 </script>

@@ -31,8 +31,9 @@
 .prose table { display: block; overflow-x: auto; border-collapse: collapse; }
 .prose th, .prose td { padding: 10px 14px; border: 1px solid var(--border); min-width: 90px; }
 .prose .katex-display { overflow-x: auto; overflow-y: hidden; padding-block: 8px; }
-.mermaid-diagram { margin: 24px 0; padding: 16px; border-radius: 12px; background: #f7f9fc; overflow-x: auto; color-scheme: light; }
-.mermaid-diagram svg { display: block; margin: auto; max-width: 100%; height: auto; }
+.mermaid-diagram { margin: 24px 0; padding: 16px; border-radius: 12px; background: var(--bg); overflow-x: auto; }
+.mermaid-diagram .diagram-zoom { width: 100%; margin: 0; }
+.diagram-zoom > svg { display: block; margin: auto; max-width: 100%; height: auto; }
 .note-relations { margin-top: 24px; padding: 26px; }
 .note-relations h2 { font-size: 20px; }
 .note-relations li { margin-block: 10px; font-size: 14px; }

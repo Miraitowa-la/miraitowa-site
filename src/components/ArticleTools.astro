@@ -20,6 +20,19 @@ import Icon from './Icon.astro';
   const download = document.querySelector<HTMLAnchorElement>('#image-download')!;
   document.querySelector('#image-close')!.addEventListener('click', () => dialog.close());
   dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
+  function openImage(src: string, alt: string, filename?: string) {
+    preview.src = src; preview.alt = alt;
+    document.querySelector('#image-caption')!.textContent = alt;
+    download.href = src;
+    const local = new URL(src).origin === location.origin;
+    if (local) { download.download = filename || new URL(src).pathname.split('/').pop() || 'image'; download.removeAttribute('target'); setControl(download, '下载原图', 'download'); }
+    else { download.removeAttribute('download'); download.target = '_blank'; download.rel = 'noopener noreferrer'; setControl(download, '打开原图', 'externalLink'); }
+    (document.querySelector('#image-download-hint') as HTMLElement).hidden = local;
+    dialog.showModal();
+  }
+  document.addEventListener('article-image-preview', ((event: CustomEvent<{ src: string; alt: string; filename: string }>) => {
+    openImage(event.detail.src, event.detail.alt, event.detail.filename);
+  }) as EventListener);
   document.querySelectorAll<HTMLImageElement>('.prose img').forEach((img) => {
     const button = document.createElement('button');
     button.type = 'button'; button.className = 'image-zoom';
@@ -28,16 +41,7 @@ import Icon from './Icon.astro';
     const linked = img.closest('a');
     if (linked) { linked.after(button); button.textContent = '放大图片'; }
     else { img.before(button); button.append(img); }
-    button.addEventListener('click', () => {
-      preview.src = img.currentSrc || img.src; preview.alt = img.alt;
-      document.querySelector('#image-caption')!.textContent = img.alt;
-      download.href = preview.src;
-      const local = new URL(preview.src).origin === location.origin;
-      if (local) { download.download = new URL(preview.src).pathname.split('/').pop() || 'image'; download.removeAttribute('target'); setControl(download, '下载原图', 'download'); }
-      else { download.removeAttribute('download'); download.target = '_blank'; download.rel = 'noopener noreferrer'; setControl(download, '打开原图', 'externalLink'); }
-      (document.querySelector('#image-download-hint') as HTMLElement).hidden = local;
-      dialog.showModal();
-    });
+    button.addEventListener('click', () => openImage(img.currentSrc || img.src, img.alt));
   });
   document.querySelectorAll<HTMLElement>('.prose pre').forEach((pre) => {
     const code = pre.querySelector('code');
