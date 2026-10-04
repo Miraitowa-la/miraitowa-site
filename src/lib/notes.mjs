@@ -1,5 +1,6 @@
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import matter from 'gray-matter';
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
@@ -11,7 +12,6 @@ import rehypeStringify from 'rehype-stringify';
 import GithubSlugger from 'github-slugger';
 
 const slash = (value) => value.replaceAll('\\', '/');
-const urlPath = (value) => value.split('/').map(encodeURIComponent).join('/');
 const plain = (node) => node.value ?? (node.children || []).map(plain).join('');
 async function files(root, prefix = '') {
   const entries = await readdir(path.join(root, prefix), { withFileTypes: true });
@@ -29,7 +29,6 @@ export async function buildNotes(root = path.resolve('content/notes')) {
     const { data, content } = matter(await readFile(path.join(root, file), 'utf8'));
     if (data.publish !== true || data.draft === true) continue;
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(data.slug || '')) throw new Error(`${file}: 请设置唯一的英文 slug`);
-    if (data.slug === 'graph') throw new Error(`${file}: graph 是保留地址，请更换 slug`);
     const date = data.date instanceof Date ? data.date.toISOString().slice(0, 10) : String(data.date || '');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date))) throw new Error(`${file}: date 应为 YYYY-MM-DD`);
     if (data.tags !== undefined && (!Array.isArray(data.tags) || data.tags.some((tag) => typeof tag !== 'string'))) throw new Error(`${file}: tags 应为文字数组`);
@@ -90,8 +89,9 @@ export async function buildNotes(root = path.resolve('content/notes')) {
       if (/^https?:\/\//i.test(target)) return { type: 'image', url: target, alt };
       const file = resolve(target, note.file, true, allFiles.filter((f) => /\.(png|jpe?g|gif|webp|avif|svg)$/i.test(f)), (f) => f);
       if (!file) { warn(target); return { type: 'text', value: `[图片缺失：${alt || target}]` }; }
-      assets.set(file, { file, absolute: path.join(root, file) });
-      return { type: 'image', url: `/blog-assets/${urlPath(file)}`, alt: alt || path.basename(file), data: width && /^\d{1,4}$/.test(width) ? { hProperties: { width: Number(width) } } : undefined };
+      const id = createHash('sha256').update(file).digest('hex').slice(0, 20) + path.extname(file).toLowerCase();
+      assets.set(file, { file, id, absolute: path.join(root, file) });
+      return { type: 'image', url: `/blog-assets/${id}`, alt: alt || path.basename(file), data: width && /^\d{1,4}$/.test(width) ? { hProperties: { width: Number(width) } } : undefined };
     }
     function walk(node, insideLink = false) {
       if (!node.children) return;
@@ -133,7 +133,13 @@ export async function buildNotes(root = path.resolve('content/notes')) {
       code(state, node) {
         if (node.lang === 'mermaid') {
           note.hasMermaid = true;
-          return { type: 'element', tagName: 'pre', properties: { className: ['mermaid-source'] }, children: [{ type: 'text', value: node.value }] };
+          return { type: 'element', tagName: 'div', properties: { className: ['mermaid-block'] }, children: [
+            { type: 'element', tagName: 'p', properties: { className: ['note-meta'], role: 'status' }, children: [{ type: 'text', value: '图表加载中…' }] },
+            { type: 'element', tagName: 'details', properties: {}, children: [
+              { type: 'element', tagName: 'summary', properties: {}, children: [{ type: 'text', value: '查看图表源码' }] },
+              { type: 'element', tagName: 'pre', properties: { className: ['mermaid-source'] }, children: [{ type: 'text', value: node.value }] },
+            ] },
+          ] };
         }
         return { type: 'element', tagName: 'pre', properties: {}, children: [{ type: 'element', tagName: 'code', properties: node.lang ? { className: [`language-${node.lang}`] } : {}, children: [{ type: 'text', value: node.value }] }] };
       },
@@ -142,7 +148,7 @@ export async function buildNotes(root = path.resolve('content/notes')) {
   }
   notes.sort((a, b) => b.date.localeCompare(a.date) || a.title.localeCompare(b.title));
   for (const note of notes) note.backlinks = notes.filter((other) => other.links.includes(note.slug)).map((n) => ({ slug: n.slug, title: n.title, url: n.url }));
-  return { notes, assets: [...assets.values()], warnings, graph: { nodes: notes.map(({ slug, title, category, url }) => ({ id: slug, title, category, url })), edges: notes.flatMap((note) => note.links.map((slug) => ({ source: note.slug, target: slug }))) } };
+  return { notes, assets: [...assets.values()], warnings };
 }
 let cached;
 export function getNotes() {

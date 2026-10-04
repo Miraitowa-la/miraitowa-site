@@ -1,21 +1,16 @@
 [hidden] { display: none !important; }
-.blog-filters, .graph-tools { display: flex; flex-wrap: wrap; gap: 14px; align-items: end; }
+.blog-filters { display: flex; flex-wrap: wrap; gap: 14px; align-items: end; }
 .blog-filters { padding: 20px; }
-.blog-filters label, .graph-tools label { display: grid; gap: 8px; font-size: 13px; color: var(--muted); flex: 1; min-width: 140px; }
-.blog-filters input, .blog-filters select, .graph-tools input, .graph-tools select { width: 100%; border: 1px solid var(--border); background: var(--bg); color: var(--text); padding: 11px; border-radius: 10px; font: inherit; }
+.blog-filters label { display: grid; gap: 8px; font-size: 13px; color: var(--muted); flex: 1; min-width: 140px; }
+.blog-filters input, .blog-filters select { width: 100%; border: 1px solid var(--border); background: var(--soft); color: var(--text); padding: 11px; border-radius: 12px; font: inherit; }
 .note-meta { color: var(--muted); font-size: 13px; line-height: 1.8; }
 .note-list { display: grid; gap: 18px; }
-.note-card { padding: 28px; }
-.note-card h2 { font-size: 23px; margin: 12px 0; }
-.note-card h2 a:hover, .note-relations a:hover { color: var(--accent); }
-.note-card > p:not(.note-meta) { color: var(--muted); line-height: 1.9; font-size: 14px; }
-.note-open { display: inline-block; color: var(--accent); margin-top: 20px; font-size: 13px; }
 .note-article { padding: 36px; }
 .note-article header { margin: 28px 0; }
 .note-article h1 { font-size: clamp(27px, 4vw, 39px); overflow-wrap: anywhere; }
 .note-article header > p:last-child { color: var(--muted); line-height: 1.9; }
 .note-toc { background: var(--soft); padding: 18px; border-radius: 14px; margin-bottom: 30px; }
-.note-toc summary, .graph-directory summary { cursor: pointer; color: var(--accent); }
+.note-toc summary { cursor: pointer; color: var(--accent); }
 .note-toc nav { display: block; }
 .note-toc ul { list-style: none; padding: 0; margin: 12px 0 0; }
 .note-toc nav a { display: block; font-size: 13px; padding: 6px 0; text-align: left; }
@@ -32,11 +27,7 @@
 .prose .katex-display { overflow-x: auto; overflow-y: hidden; padding-block: 8px; }
 .mermaid-diagram { margin: 24px 0; padding: 16px; border-radius: 12px; background: #f7f9fc; overflow-x: auto; color-scheme: light; }
 .mermaid-diagram svg { display: block; margin: auto; max-width: 100%; height: auto; }
-.note-relations, .graph-panel { margin-top: 24px; padding: 26px; }
+.note-relations { margin-top: 24px; padding: 26px; }
 .note-relations h2 { font-size: 20px; }
-.note-relations li, .graph-directory li { margin-block: 10px; font-size: 14px; }
-.graph-canvas { display: block; width: 100%; height: auto; min-height: 260px; border-radius: 16px; background: var(--bg); touch-action: none; }
-.graph-edge { stroke: var(--muted); stroke-opacity: .35; stroke-width: 1.5; }
-.graph-node { cursor: grab; }.graph-node text { fill: var(--text); font-size: 12px; }.graph-node a:hover text { fill: var(--accent); }.graph-muted { opacity: .2; }
-.graph-tools .button { font-size: 12px; }.graph-directory { margin-top: 16px; }
-@media(max-width:540px) { .note-article { padding: 25px 20px; }.note-card, .note-relations, .graph-panel { padding: 22px 18px; }.prose { font-size: 14px; }.graph-canvas { min-height: 230px; } }
+.note-relations li { margin-block: 10px; font-size: 14px; }
+@media(max-width:540px) { .note-article { padding: 25px 20px; }.note-relations { padding: 22px 18px; }.prose { font-size: 14px; } }

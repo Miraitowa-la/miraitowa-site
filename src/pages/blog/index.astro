@@ -6,24 +6,27 @@ const { notes } = await getNotes();
 const categories = [...new Set(notes.map((note) => note.category))];
 ---
 <BaseLayout title="技术博客" description="通过文章与双向链接，探索技术知识之间的关联。">
-  <section class="projects-intro surface"><p class="eyebrow">连接知识 / CONNECT THE DOTS</p><h1>技术博客</h1><p>从一篇笔记出发，发现相互连接的知识。</p><div class="actions"><a class="button primary" href="/blog/graph/">探索知识图谱 ↗</a></div></section>
+  <section class="projects-intro surface"><p class="eyebrow">记录与分享 / TECH NOTES</p><h1>技术博客</h1><p>记录学习笔记、问题排查与开发实践。</p></section>
   <form class="blog-filters surface" onsubmit="return false"><label>搜索文章<input id="note-search" type="search" placeholder="标题、摘要或标签" /></label><label>分类<select id="note-category"><option value="">全部分类</option>{categories.map((category) => <option>{category}</option>)}</select></label></form>
   <p id="note-count" class="note-meta" aria-live="polite">共 {notes.length} 篇文章</p>
-  <div class="note-list">{notes.map((note) => <article class="surface note-card" data-search={`${note.title} ${note.description} ${note.tags.join(' ')}`} data-category={note.category}><p class="note-meta"><time datetime={note.date}>{note.date}</time> · {note.category}</p><h2><a href={note.url}>{note.title}</a></h2><p>{note.description}</p><div class="topics">{note.tags.map((tag) => <span>{tag}</span>)}</div><a class="note-open" href={note.url}>阅读笔记 →</a></article>)}</div>
+  <p id="active-tag" class="note-meta" hidden><span></span> · <a href="/blog/">清除标签筛选</a></p>
+  <div class="note-list">{notes.map((note) => <article class="project-card note-card" data-search={`${note.title} ${note.description} ${note.tags.join(' ')}`} data-tags={JSON.stringify(note.tags)} data-category={note.category}><div class="project-card-top"><span class="project-category"><time datetime={note.date}>{note.date}</time> · {note.category}</span><span class="project-mark" aria-hidden="true">↗</span></div><h3><a href={note.url}>{note.title}</a></h3><p>{note.description}</p><ul class="project-tags">{note.tags.map((tag) => <li>{tag}</li>)}</ul><div class="project-links"><a href={note.url}>阅读笔记 →</a></div></article>)}</div>
   <p id="note-empty" hidden>没有匹配的文章，试试其他关键词。</p>
 </BaseLayout>
 <script>
   const search = document.querySelector<HTMLInputElement>('#note-search')!;
   const category = document.querySelector<HTMLSelectElement>('#note-category')!;
   const cards = [...document.querySelectorAll<HTMLElement>('.note-card')];
+  const tag = new URLSearchParams(location.search).get('tag');
   function filter() {
     let count = 0;
     for (const card of cards) {
-      card.hidden = !(card.dataset.search!.toLowerCase().includes(search.value.trim().toLowerCase()) && (!category.value || card.dataset.category === category.value));
+      card.hidden = !(card.dataset.search!.toLowerCase().includes(search.value.trim().toLowerCase()) && (!category.value || card.dataset.category === category.value) && (!tag || JSON.parse(card.dataset.tags!).includes(tag)));
       if (!card.hidden) count++;
     }
     document.querySelector('#note-count')!.textContent = `共 ${count} 篇文章`;
     (document.querySelector('#note-empty') as HTMLElement).hidden = count !== 0;
   }
   search.addEventListener('input', filter); category.addEventListener('change', filter);
+  if (tag) { const active = document.querySelector<HTMLElement>('#active-tag')!; active.hidden = false; active.querySelector('span')!.textContent = `标签：${tag}`; filter(); }
 </script>

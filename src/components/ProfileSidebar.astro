@@ -1,7 +1,10 @@
 ---
 import { site } from '../config/site';
 import { projects } from '../data/projects';
+import { getNotes } from '../lib/notes.mjs';
 const categories = [...new Set(projects.map((project) => project.category))];
+const { notes } = await getNotes();
+const keywords = [...new Set(notes.flatMap((note) => note.tags))];
 ---
 <aside class="profile-sidebar" aria-label="作者与技术方向">
   <section class="profile-panel glass">
@@ -16,5 +19,5 @@ const categories = [...new Set(projects.map((project) => project.category))];
     <h2 class="accent-heading">项目方向</h2>
     <ul class="category-list">{categories.map((category, index) => <li><a href={`/projects/#category-${index}`}><span>{category}</span><span class="category-count">{projects.filter((project) => project.category === category).length}</span></a></li>)}</ul>
   </section>
-  <section class="sidebar-panel glass"><h2 class="accent-heading">技术关键词</h2><div class="topics"><span>ESP32</span><span>STM32</span><span>Python</span><span>IoT</span><span>PCB</span><span>开源</span></div></section>
+  <section class="sidebar-panel glass"><h2 class="accent-heading">技术关键词</h2><div class="topics">{keywords.map((tag) => <a href={`/blog/?tag=${encodeURIComponent(tag)}`}>{tag}</a>)}</div></section>
 </aside>
