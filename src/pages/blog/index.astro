@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import CategorySelect from '../../components/CategorySelect.astro';
+import NoteCard from '../../components/NoteCard.astro';
 import { getNotes } from '../../lib/notes.mjs';
 import '../../styles/blog.css';
 const { notes } = await getNotes();
@@ -8,10 +9,10 @@ const categories = [...new Set(notes.map((note) => note.category))];
 ---
 <BaseLayout title="技术博客" description="通过文章与双向链接，探索技术知识之间的关联。">
   <section class="projects-intro surface"><p class="eyebrow">记录与分享 / TECH NOTES</p><h1>技术博客</h1><p>记录学习笔记、问题排查与开发实践。</p></section>
-  <form class="blog-filters surface" onsubmit="return false"><label>搜索文章<input id="note-search" type="search" placeholder="搜索标题、标签或正文，支持拼写容错" /></label><CategorySelect categories={categories} /></form>
+  <form class="blog-filters surface" onsubmit="return false"><label>搜索文章<input id="note-search" type="search" placeholder="搜索标题、标签或正文，支持拼写容错" /></label><CategorySelect categories={categories} /><a class="button" href="/blog/" aria-label="重置搜索、分类和标签筛选">重置筛选 ↺</a></form>
   <p id="search-status" class="note-meta" role="status" hidden></p>
   <div class="section-heading note-list-heading"><h2 id="note-list-title" class="accent-heading">全部文章</h2><div class="note-list-status"><span id="note-count" class="note-meta" aria-live="polite">共 {notes.length} 篇文章</span><a id="active-tag" href="/blog/" hidden>清除标签筛选</a></div></div>
-  <div class="note-list">{notes.map((note) => <article class="project-card note-card" data-slug={note.slug} data-search={`${note.title} ${note.description} ${note.tags.join(' ')}`} data-tags={JSON.stringify(note.tags)} data-category={note.category}><div class="project-card-top"><span class="project-category"><time datetime={note.date}>{note.date}</time> · {note.category}</span><span class="project-mark" aria-hidden="true">↗</span></div><h3><a href={note.url}>{note.title}</a></h3><p>{note.description}</p><ul class="project-tags">{note.tags.map((tag) => <li>{tag}</li>)}</ul><div class="project-links"><a href={note.url}>阅读笔记 →</a></div></article>)}</div>
+  <div class="note-list">{notes.map((note) => <NoteCard note={note} />)}</div>
   <p id="note-empty" hidden>没有匹配的文章，试试其他关键词。</p>
 </BaseLayout>
 <script>
