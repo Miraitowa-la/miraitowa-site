@@ -128,6 +128,8 @@ export async function buildNotes(root = path.resolve('content/notes')) {
     }
     const tree = trees.get(note.slug);
     walk(tree);
+    const searchable = (node) => node.type === 'html' ? '' : node.value ?? (node.children || []).map(searchable).join(' ');
+    note.searchText = searchable(tree).replace(/\s+/g, ' ').trim();
     note.links = [...new Set(note.links)];
     const renderer = unified().use(remarkRehype, { handlers: {
       code(state, node) {
@@ -156,4 +158,8 @@ export function getNotes() {
   if (import.meta.env?.DEV) return load();
   cached ??= load();
   return cached;
+}
+
+export function searchRecords(notes) {
+  return notes.map(({ slug, title, description, tags, category, searchText }) => ({ slug, title, description, tags, category, body: searchText }));
 }

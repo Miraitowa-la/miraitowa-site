@@ -1,0 +1,62 @@
+---
+interface Props { categories: string[] }
+const { categories } = Astro.props;
+const options = ['', ...categories];
+---
+<div class="category-field">
+  <label id="category-label" for="note-category">分类</label>
+  <select id="note-category"><option value="">全部分类</option>{categories.map((category) => <option>{category}</option>)}</select>
+  <div id="category-custom" class="category-custom" hidden>
+    <button id="category-trigger" type="button" role="combobox" aria-labelledby="category-label category-value" aria-haspopup="listbox" aria-controls="category-options" aria-expanded="false"><span id="category-value">全部分类</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></button>
+    <div id="category-options" class="category-options glass" role="listbox" aria-labelledby="category-label" hidden>{options.map((value) => <button type="button" role="option" data-value={value} aria-selected={value === '' ? 'true' : 'false'} tabindex="-1"><span>{value || '全部分类'}</span><span class="category-check" aria-hidden="true">✓</span></button>)}</div>
+  </div>
+</div>
+<script>
+  const native = document.querySelector<HTMLSelectElement>('#note-category')!;
+  const wrapper = document.querySelector<HTMLElement>('#category-custom')!;
+  const trigger = document.querySelector<HTMLButtonElement>('#category-trigger')!;
+  const list = document.querySelector<HTMLElement>('#category-options')!;
+  const options = [...list.querySelectorAll<HTMLButtonElement>('[role="option"]')];
+  native.hidden = true; wrapper.hidden = false;
+  function close(restore = false) { list.hidden = true; trigger.setAttribute('aria-expanded', 'false'); if (restore) trigger.focus(); }
+  function open(last = false) {
+    list.hidden = false; trigger.setAttribute('aria-expanded', 'true');
+    (last ? options.at(-1)! : options.find((option) => option.dataset.value === native.value)!).focus();
+  }
+  trigger.addEventListener('click', () => list.hidden ? open() : close());
+  trigger.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); open(event.key === 'ArrowUp'); }
+    if (event.key === 'Escape') close();
+  });
+  options.forEach((option, index) => {
+    option.addEventListener('click', () => {
+      native.value = option.dataset.value!;
+      document.querySelector('#category-value')!.textContent = option.dataset.value || '全部分类';
+      options.forEach((other) => other.setAttribute('aria-selected', String(other === option)));
+      native.dispatchEvent(new Event('change', { bubbles: true })); close(true);
+    });
+    option.addEventListener('keydown', (event) => {
+      if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+        event.preventDefault();
+        const next = event.key === 'Home' ? 0 : event.key === 'End' ? options.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length;
+        options[next].focus();
+      }
+      if (event.key === 'Escape') { event.preventDefault(); close(true); }
+      if (event.key === 'Tab') close(true);
+    });
+  });
+  document.addEventListener('click', (event) => { if (!wrapper.contains(event.target as Node)) close(); });
+  wrapper.addEventListener('focusout', (event) => { if (!wrapper.contains(event.relatedTarget as Node)) close(); });
+</script>
+<style>
+  .category-field { display: grid; gap: 8px; flex: 1; min-width: 140px; color: var(--muted); font-size: 13px; }
+  .category-custom { position: relative; }
+  #category-trigger { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px; border: 1px solid var(--border); border-radius: 12px; background: var(--soft); color: var(--text); font: inherit; cursor: pointer; }
+  #category-trigger:hover, #category-trigger[aria-expanded="true"] { border-color: var(--accent); }
+  #category-trigger svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; transition: transform 150ms; }
+  #category-trigger[aria-expanded="true"] svg { transform: rotate(180deg); }
+  .category-options { position: absolute; top: calc(100% + 8px); left: 0; right: 0; z-index: 20; padding: 6px; border-radius: 14px; max-height: 280px; overflow-y: auto; background: var(--surface); }
+  .category-options button { display: flex; align-items: center; justify-content: space-between; width: 100%; border: 0; border-radius: 9px; background: transparent; color: var(--text); padding: 11px 12px; text-align: left; font: inherit; cursor: pointer; }
+  .category-options button:hover, .category-options button:focus-visible, .category-options button[aria-selected="true"] { background: var(--soft); color: var(--accent); outline: none; }
+  .category-check { visibility: hidden; }.category-options button[aria-selected="true"] .category-check { visibility: visible; }
+</style>

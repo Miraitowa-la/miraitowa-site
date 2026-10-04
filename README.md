@@ -30,7 +30,10 @@ npm run preview
 - `src/pages/[section].astro`：静态生成关于占位页面。
 - `content/notes/`：准备公开的 Obsidian Markdown 笔记与附件。
 - `src/lib/notes.mjs`：解析笔记、转换双链/附件、生成目录和反向链接。
-- `src/pages/blog/index.astro`：文章列表、标题/摘要/标签搜索和分类筛选。
+- `src/pages/blog/index.astro`：文章列表、全文搜索和分类筛选。
+- `src/pages/blog/search.json.ts`：静态生成仅包含公开文章的全文搜索索引，输入搜索时加载。
+- `src/lib/blog-search.mjs`：Fuse.js 模糊匹配，标题和标签优先于摘要、正文，多关键词取交集。
+- `src/components/CategorySelect.astro`：圆角分类菜单，支持键盘选择；禁用 JavaScript 时保留原生下拉框。
 - `src/pages/blog/[slug].astro`：文章阅读、目录和反向链接。
 - `src/pages/blog-assets/[...asset].ts`：构建时输出公开文章引用的本地图片，不是运行时接口。
 - `src/components/MermaidDiagrams.astro`：仅在有 Mermaid 的文章中加载图表渲染。
@@ -73,11 +76,15 @@ npm run deploy
 
 项目内容根据 GitHub 公开仓库简介与 README 整理，核对日期为 2026-10-04。私有仓库不在展示范围内。列表为本地静态数据，不会自动同步；新增或修改项目请编辑 `src/data/projects.ts`，更新后构建并推送。历史项目单独分组，项目主页仅在已知链接时提供。
 
-博客已实现 Markdown 阅读与知识关联。RSS、Sitemap、全文搜索、评论与 MDX 暂未实现。示例文章明确标注为功能演示，不代表个人项目成果。
+博客已实现 Markdown 阅读、知识关联与全文搜索。RSS、Sitemap、评论与 MDX 暂未实现。示例文章明确标注为功能演示，不代表个人项目成果。
 
 ## Obsidian 笔记发布
 
 将准备公开的 Markdown 文件与附件复制到 `content/notes/`，可以保留文件夹结构。不需要复制 `.obsidian/`。上传指复制进本地项目并提交 Git，当前没有网页上传后台。
+
+文件可直接放在 `notes/` 根目录，也可放在任意多级目录，如 `notes/嵌入式/ESP32/SPI通信.md`。“示例”只是演示文件夹，不是必需目录。目录用于整理文件，网站分类由 `category` 字段决定，文章地址由 `slug` 决定。
+
+搜索范围包含标题、摘要、标签与正文（包括代码文字）。支持英文大小写不敏感和较长关键词的轻量拼写容错；一到两个字符采用精确包含匹配。多个词用空格分隔，每个词都需要匹配。结果按相关程度排序，并可叠加分类和标签筛选；不提供拼音转换或语义搜索。全文索引在构建时更新，只包含公开文章，浏览器首次输入时才下载；加载失败时提示并回退到标题、摘要和标签匹配。
 
 每篇公开笔记顶部填写：
 

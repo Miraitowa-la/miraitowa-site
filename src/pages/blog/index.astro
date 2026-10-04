@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import CategorySelect from '../../components/CategorySelect.astro';
 import { getNotes } from '../../lib/notes.mjs';
 import '../../styles/blog.css';
 const { notes } = await getNotes();
@@ -7,25 +8,57 @@ const categories = [...new Set(notes.map((note) => note.category))];
 ---
 <BaseLayout title="技术博客" description="通过文章与双向链接，探索技术知识之间的关联。">
   <section class="projects-intro surface"><p class="eyebrow">记录与分享 / TECH NOTES</p><h1>技术博客</h1><p>记录学习笔记、问题排查与开发实践。</p></section>
-  <form class="blog-filters surface" onsubmit="return false"><label>搜索文章<input id="note-search" type="search" placeholder="标题、摘要或标签" /></label><label>分类<select id="note-category"><option value="">全部分类</option>{categories.map((category) => <option>{category}</option>)}</select></label></form>
+  <form class="blog-filters surface" onsubmit="return false"><label>搜索文章<input id="note-search" type="search" placeholder="搜索标题、标签或正文，支持拼写容错" /></label><CategorySelect categories={categories} /></form>
+  <p id="search-status" class="note-meta" role="status" hidden></p>
   <div class="section-heading note-list-heading"><h2 id="note-list-title" class="accent-heading">全部文章</h2><div class="note-list-status"><span id="note-count" class="note-meta" aria-live="polite">共 {notes.length} 篇文章</span><a id="active-tag" href="/blog/" hidden>清除标签筛选</a></div></div>
-  <div class="note-list">{notes.map((note) => <article class="project-card note-card" data-search={`${note.title} ${note.description} ${note.tags.join(' ')}`} data-tags={JSON.stringify(note.tags)} data-category={note.category}><div class="project-card-top"><span class="project-category"><time datetime={note.date}>{note.date}</time> · {note.category}</span><span class="project-mark" aria-hidden="true">↗</span></div><h3><a href={note.url}>{note.title}</a></h3><p>{note.description}</p><ul class="project-tags">{note.tags.map((tag) => <li>{tag}</li>)}</ul><div class="project-links"><a href={note.url}>阅读笔记 →</a></div></article>)}</div>
+  <div class="note-list">{notes.map((note) => <article class="project-card note-card" data-slug={note.slug} data-search={`${note.title} ${note.description} ${note.tags.join(' ')}`} data-tags={JSON.stringify(note.tags)} data-category={note.category}><div class="project-card-top"><span class="project-category"><time datetime={note.date}>{note.date}</time> · {note.category}</span><span class="project-mark" aria-hidden="true">↗</span></div><h3><a href={note.url}>{note.title}</a></h3><p>{note.description}</p><ul class="project-tags">{note.tags.map((tag) => <li>{tag}</li>)}</ul><div class="project-links"><a href={note.url}>阅读笔记 →</a></div></article>)}</div>
   <p id="note-empty" hidden>没有匹配的文章，试试其他关键词。</p>
 </BaseLayout>
 <script>
+  import { createSearch } from '../../lib/blog-search.mjs';
   const search = document.querySelector<HTMLInputElement>('#note-search')!;
   const category = document.querySelector<HTMLSelectElement>('#note-category')!;
   const cards = [...document.querySelectorAll<HTMLElement>('.note-card')];
   const tag = new URLSearchParams(location.search).get('tag');
-  function filter() {
+  const status = document.querySelector<HTMLElement>('#search-status')!;
+  let indexPromise: Promise<ReturnType<typeof createSearch>> | undefined;
+  let revision = 0;
+  async function filter() {
+    const version = ++revision;
+    const query = search.value.trim();
+    let order = cards.map((card) => card.dataset.slug!);
+    status.hidden = true;
+    if (query) {
+      status.hidden = false; status.textContent = '正在搜索…';
+      try {
+        indexPromise ??= fetch('/blog/search.json').then((response) => {
+          if (!response.ok) throw new Error('Search index unavailable');
+          return response.json();
+        }).then(createSearch);
+        const runSearch = await indexPromise;
+        if (version !== revision) return;
+        order = runSearch(query);
+        status.hidden = true;
+      } catch {
+        indexPromise = undefined;
+        if (version !== revision) return;
+        order = cards.filter((card) => card.dataset.search!.toLowerCase().includes(query.toLowerCase())).map((card) => card.dataset.slug!);
+        status.textContent = '正文搜索暂未加载，目前仅匹配标题、摘要和标签。重新输入可重试。';
+      }
+    }
+    const matches = new Set(order);
     let count = 0;
     for (const card of cards) {
-      card.hidden = !(card.dataset.search!.toLowerCase().includes(search.value.trim().toLowerCase()) && (!category.value || card.dataset.category === category.value) && (!tag || JSON.parse(card.dataset.tags!).includes(tag)));
+      card.hidden = !(matches.has(card.dataset.slug!) && (!category.value || card.dataset.category === category.value) && (!tag || JSON.parse(card.dataset.tags!).includes(tag)));
       if (!card.hidden) count++;
     }
+    const list = document.querySelector('.note-list')!;
+    for (const slug of order) { const card = cards.find((card) => card.dataset.slug === slug); if (card) list.append(card); }
     document.querySelector('#note-count')!.textContent = `共 ${count} 篇文章`;
     (document.querySelector('#note-empty') as HTMLElement).hidden = count !== 0;
   }
-  search.addEventListener('input', filter); category.addEventListener('change', filter);
+  let pending: ReturnType<typeof setTimeout>;
+  search.addEventListener('input', () => { revision++; clearTimeout(pending); pending = setTimeout(filter, 120); });
+  category.addEventListener('change', filter);
   if (tag) { document.querySelector<HTMLElement>('#active-tag')!.hidden = false; document.querySelector('#note-list-title')!.textContent = `标签：${tag}`; filter(); }
 </script>

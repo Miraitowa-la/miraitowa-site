@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { buildNotes } from '../src/lib/notes.mjs';
+import { buildNotes, searchRecords } from '../src/lib/notes.mjs';
+import { createSearch } from '../src/lib/blog-search.mjs';
 
 test('公开示例支持链接、目录、图片、公式和反向链接', async () => {
   const { notes, assets, warnings } = await buildNotes();
@@ -56,5 +57,30 @@ test('Obsidian 和 Markdown 图片语法共享可访问的 ASCII 附件地址', 
     assert.equal(sources.length, 2);
     assert.equal(sources[0], sources[1]);
     assert.match(sources[0], /^\/blog-assets\/[a-f0-9]{20}\.svg$/);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test('全文搜索支持正文、错拼、多关键词，并优先匹配标签', async () => {
+  const { notes } = await buildNotes();
+  const records = searchRecords(notes);
+  assert.ok(records.every((record) => !('file' in record) && !('html' in record)));
+  const search = createSearch(records);
+  assert.deepEqual(search('时钟'), ['spi-notes']);
+  assert.equal(search('Obsidain')[0], 'knowledge-guide');
+  assert.deepEqual(search('片选 设备手册'), ['spi-notes']);
+  assert.deepEqual(search('zzzxq-nonexistent'), []);
+  assert.equal(search('').length, 3);
+});
+
+test('notes 下支持多级目录，分类独立于目录结构', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'miraitowa-folders-'));
+  try {
+    await mkdir(path.join(root, '技术/嵌入式/ESP32'), { recursive: true });
+    await writeFile(path.join(root, '技术/嵌入式/ESP32/通信.md'), '---\nslug: nested-note\ndate: 2026-10-04\npublish: true\ncategory: 自定义分类\n---\n深层目录内容');
+    const { notes } = await buildNotes(root);
+    assert.equal(notes.length, 1);
+    assert.equal(notes[0].category, '自定义分类');
+    assert.equal(notes[0].url, '/blog/nested-note/');
+    assert.equal(notes[0].searchText, '深层目录内容');
   } finally { await rm(root, { recursive: true, force: true }); }
 });
