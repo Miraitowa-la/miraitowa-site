@@ -140,4 +140,6 @@ npm run preview
 
 ## 许可证
 
+界面图标统一使用 Tabler Icons 的 Outline SVG（MIT 许可），来源：https://tabler.io/icons 。完整许可保留于 `public/tabler-icons-LICENSE.txt`，随网站部署。`src/lib/icons.ts` 仅引入实际使用的图标，`src/components/Icon.astro` 统一渲染，尺寸与线宽在 `src/styles/global.css` 的 `.ui-icon` 中调整；图标继承文字颜色，不依赖外部 CDN。
+
 尚未选择许可证；公开仓库不代表已授权他人复用，后续由作者确定并添加 LICENSE。

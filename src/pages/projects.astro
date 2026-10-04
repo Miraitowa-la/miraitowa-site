@@ -1,4 +1,5 @@
 ---
+import Icon from '../components/Icon.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { projects } from '../data/projects';
 import { site } from '../config/site';
@@ -11,7 +12,7 @@ const categories = [...new Set(projects.map((project) => project.category))];
     <p class="eyebrow">从想法到实现 / OPEN PROJECTS</p>
     <h1>开源项目</h1>
     <p>从底层通信到应用工具，记录我在实践中的探索。<br />在 GitHub 查看源代码、使用说明与最新进展。</p>
-    <div class="actions"><a class="button" href={`${site.github}?tab=repositories`}>全部 GitHub 仓库 ↗</a></div>
+    <div class="actions"><a class="button" href={`${site.github}?tab=repositories`}>全部 GitHub 仓库 <Icon name="externalLink" /></a></div>
   </section>
   <div class="project-groups">
     {categories.map((category, index) => (

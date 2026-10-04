@@ -1,4 +1,5 @@
 ---
+import Icon from '../components/Icon.astro';
 import { site } from '../config/site';
 import { projects } from '../data/projects';
 import { getNotes } from '../lib/notes.mjs';
@@ -12,7 +13,7 @@ const keywords = [...new Set(notes.flatMap((note) => note.tags))];
     <div class="profile-info">
       <h2>{site.name}</h2><span class="profile-rule" aria-hidden="true"></span>
       <p>{site.description}</p><span class="profile-role">嵌入式 · 硬件 · 开源</span>
-      <div class="profile-links"><a href={site.github}>GitHub ↗</a><a href="/about/">关于我 →</a></div>
+      <div class="profile-links"><a href={site.github}>GitHub <Icon name="externalLink" /></a><a href="/about/">关于我 <Icon name="arrowRight" /></a></div>
     </div>
   </section>
   <section class="sidebar-panel glass">

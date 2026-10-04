@@ -1,4 +1,5 @@
 ---
+import Icon from '../components/Icon.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { site } from '../config/site';
 import ProjectCard from '../components/ProjectCard.astro';
@@ -21,19 +22,19 @@ const sections = [
     <h1>保持好奇，<br /><span>让想法落地。</span></h1>
     <p class="hero-description">你好，我是 {site.name}。<br />从电路到代码，记录每一次技术探索。</p>
     <div class="actions">
-      <a class="button primary" href="/projects/">探索项目 <span aria-hidden="true">→</span></a>
-      <a class="button" href={site.github}>访问 GitHub ↗</a>
+      <a class="button primary" href="/projects/">探索项目 <Icon name="arrowRight" /></a>
+      <a class="button" href={site.github}>访问 GitHub <Icon name="externalLink" /></a>
     </div>
     <div class="topics" aria-label="技术方向"><span>嵌入式</span><span>硬件开发</span><span>开源</span></div>
   </section>
-  <section class="featured" aria-labelledby="featured-title"><div class="section-heading"><h2 id="featured-title" class="accent-heading">精选项目</h2><a href="/projects/">查看全部 →</a></div><div class="project-grid">{featured.map((project) => <ProjectCard project={project} />)}</div></section>
-  <section class="featured" aria-labelledby="latest-title"><div class="section-heading"><h2 id="latest-title" class="accent-heading">最新博客</h2><a href="/blog/">查看全部 →</a></div>{latest.length ? <div class="project-grid">{latest.map((note) => <NoteCard note={note} />)}</div> : <p>还没有公开笔记，敬请期待。</p>}</section>
+  <section class="featured" aria-labelledby="featured-title"><div class="section-heading"><h2 id="featured-title" class="accent-heading">精选项目</h2><a href="/projects/">查看全部 <Icon name="arrowRight" /></a></div><div class="project-grid">{featured.map((project) => <ProjectCard project={project} />)}</div></section>
+  <section class="featured" aria-labelledby="latest-title"><div class="section-heading"><h2 id="latest-title" class="accent-heading">最新博客</h2><a href="/blog/">查看全部 <Icon name="arrowRight" /></a></div>{latest.length ? <div class="project-grid">{latest.map((note) => <NoteCard note={note} />)}</div> : <p>还没有公开笔记，敬请期待。</p>}</section>
   <section class="explore" aria-labelledby="explore-title">
     <div class="section-heading"><h2 id="explore-title">从这里开始</h2><span>学习 · 实践 · 分享</span></div>
     <div class="cards">
       {sections.map(({ number, title, description, href }) => (
         <a class="card" href={href}>
-          <span class="card-number">{number} <span aria-hidden="true">↗</span></span>
+          <span class="card-number">{number} <span aria-hidden="true"><Icon name="arrowUpRight" /></span></span>
           <h3>{title}</h3>
           <p>{description}</p>
         </a>

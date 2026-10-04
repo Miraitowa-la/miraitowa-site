@@ -1,10 +1,20 @@
+---
+import Icon from './Icon.astro';
+---
 <dialog id="image-preview" aria-label="图片预览">
-  <div class="image-toolbar"><a id="image-download" class="button">下载原图 ↓</a><button class="button" type="button" id="image-close" autofocus>关闭 ×</button></div>
+  <div class="image-toolbar"><a id="image-download" class="button"><span>下载原图</span><Icon name="download" /></a><button class="button" type="button" id="image-close" autofocus>关闭 <Icon name="x" /></button></div>
   <img id="preview-image" alt="" />
   <p id="image-caption" class="note-meta"></p>
   <p id="image-download-hint" class="note-meta" hidden>外部图片将打开原图，可在原图上另存为。</p>
 </dialog>
 <script>
+  import { icons, type IconName } from '../lib/icons';
+  function setControl(element: HTMLElement, label: string, icon: IconName) {
+    const text = document.createElement('span'); text.textContent = label;
+    const graphic = document.createElement('span'); graphic.className = 'ui-icon'; graphic.setAttribute('aria-hidden', 'true');
+    graphic.innerHTML = icons[icon].replace('<svg', '<svg aria-hidden="true" focusable="false"');
+    element.replaceChildren(text, graphic);
+  }
   const dialog = document.querySelector<HTMLDialogElement>('#image-preview')!;
   const preview = document.querySelector<HTMLImageElement>('#preview-image')!;
   const download = document.querySelector<HTMLAnchorElement>('#image-download')!;
@@ -23,8 +33,8 @@
       document.querySelector('#image-caption')!.textContent = img.alt;
       download.href = preview.src;
       const local = new URL(preview.src).origin === location.origin;
-      if (local) { download.download = new URL(preview.src).pathname.split('/').pop() || 'image'; download.removeAttribute('target'); download.textContent = '下载原图 ↓'; }
-      else { download.removeAttribute('download'); download.target = '_blank'; download.rel = 'noopener noreferrer'; download.textContent = '打开原图 ↗'; }
+      if (local) { download.download = new URL(preview.src).pathname.split('/').pop() || 'image'; download.removeAttribute('target'); setControl(download, '下载原图', 'download'); }
+      else { download.removeAttribute('download'); download.target = '_blank'; download.rel = 'noopener noreferrer'; setControl(download, '打开原图', 'externalLink'); }
       (document.querySelector('#image-download-hint') as HTMLElement).hidden = local;
       dialog.showModal();
     });
@@ -34,13 +44,13 @@
     if (!code) return;
     const wrapper = document.createElement('div'); wrapper.className = 'code-block';
     pre.before(wrapper); wrapper.append(pre);
-    const button = document.createElement('button'); button.type = 'button'; button.className = 'button code-copy'; button.textContent = '复制代码';
+    const button = document.createElement('button'); button.type = 'button'; button.className = 'button code-copy'; setControl(button, '复制代码', 'copy');
     const status = document.createElement('span'); status.className = 'sr-only'; status.setAttribute('role', 'status');
     wrapper.append(button, status);
     button.addEventListener('click', async () => {
-      try { await navigator.clipboard.writeText(code.textContent || ''); button.textContent = '已复制 ✓'; status.textContent = '代码已复制'; }
-      catch { button.textContent = '复制失败'; status.textContent = '请手动选择代码复制'; }
-      setTimeout(() => { button.textContent = '复制代码'; status.textContent = ''; }, 2000);
+      try { await navigator.clipboard.writeText(code.textContent || ''); setControl(button, '已复制', 'check'); status.textContent = '代码已复制'; }
+      catch { setControl(button, '复制失败', 'x'); status.textContent = '请手动选择代码复制'; }
+      setTimeout(() => { setControl(button, '复制代码', 'copy'); status.textContent = ''; }, 2000);
     });
   });
 </script>

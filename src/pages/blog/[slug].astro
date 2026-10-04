@@ -1,4 +1,5 @@
 ---
+import Icon from '../../components/Icon.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import MermaidDiagrams from '../../components/MermaidDiagrams.astro';
 import ArticleTools from '../../components/ArticleTools.astro';
@@ -13,12 +14,12 @@ const { note } = Astro.props;
 ---
 <BaseLayout title={note.title} description={note.description}>
   <article class="surface note-article">
-  <div class="note-toolbar"><a class="note-meta" href="/blog/">← 全部文章</a><a class="button" href={`/blog-downloads/${note.slug}.md`} download={`${note.slug}.md`} title="下载 Markdown 笔记，不包含图片附件" aria-describedby="note-download-info">下载笔记 ↓</a><span id="note-download-info" class="sr-only">Markdown 文件；图片需另行保存，不包含附件包。</span></div>
+  <div class="note-toolbar"><a class="note-meta" href="/blog/"><Icon name="arrowLeft" /> 全部文章</a><a class="button" href={`/blog-downloads/${note.slug}.md`} download={`${note.slug}.md`} title="下载 Markdown 笔记，不包含图片附件" aria-describedby="note-download-info">下载笔记 <Icon name="download" /></a><span id="note-download-info" class="sr-only">Markdown 文件；图片需另行保存，不包含附件包。</span></div>
   <header><p class="eyebrow">{note.category}</p><h1>{note.title}</h1><p class="note-meta">发布 <time datetime={note.date}>{note.date}</time>{note.updated && <> · 更新 <time datetime={note.updated}>{note.updated}</time></>} · {note.tags.join(' / ')}</p><p>{note.description}</p></header>
   {note.headings.length > 0 && <details class="note-toc" open><summary>文章目录</summary><nav aria-label="文章目录"><ul>{note.headings.map((heading) => <li style={`padding-left:${(heading.depth - 1) * 12}px`}><a href={`#${heading.slug}`}>{heading.text}</a></li>)}</ul></nav></details>}
   <div class="prose" set:html={note.html} />
   </article>
-  <section class="surface note-relations"><h2>引用这篇文章</h2>{note.backlinks.length ? <ul>{note.backlinks.map((n) => <li><a href={n.url}>{n.title} →</a></li>)}</ul> : <p class="note-meta">暂时没有其他文章引用这篇笔记。</p>}</section>
+  <section class="surface note-relations"><h2>引用这篇文章</h2>{note.backlinks.length ? <ul>{note.backlinks.map((n) => <li><a href={n.url}>{n.title} <Icon name="arrowRight" /></a></li>)}</ul> : <p class="note-meta">暂时没有其他文章引用这篇笔记。</p>}</section>
   {note.hasMermaid && <MermaidDiagrams />}
   <ArticleTools />
 </BaseLayout>

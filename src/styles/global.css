@@ -30,6 +30,9 @@ a { color: inherit; text-decoration: none; }
 a, button, select { -webkit-tap-highlight-color: transparent; }
 a:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 5px; }
 button, select { font: inherit; }
+.ui-icon { display: inline-flex; width: 18px; height: 18px; flex: 0 0 auto; vertical-align: middle; }
+.ui-icon svg { display: block; width: 100%; height: 100%; stroke-width: 1.8; }
+a:has(> .ui-icon) { display: inline-flex; align-items: center; gap: 6px; }
 .container { width: min(1240px, calc(100% - 48px)); margin-inline: auto; }
 .glass { background: var(--glass); border: 1px solid var(--glass-border); box-shadow: var(--shadow); }
 @supports (backdrop-filter: blur(1px)) { .glass { backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); } }
