@@ -1,11 +1,11 @@
 ---
 interface Props {
-  note: { slug: string; title: string; description: string; date: string; category: string; tags: string[]; url: string };
+  note: { slug: string; title: string; description: string; date: string; updated?: string; category: string; tags: string[]; url: string };
 }
 const { note } = Astro.props;
 ---
 <article class="project-card note-card" data-slug={note.slug} data-search={`${note.title} ${note.description} ${note.tags.join(' ')}`} data-tags={JSON.stringify(note.tags)} data-category={note.category}>
-  <div class="project-card-top"><span class="project-category"><time datetime={note.date}>{note.date}</time> · {note.category}</span><span class="project-mark" aria-hidden="true">↗</span></div>
+  <div class="project-card-top"><span class="project-category"><time datetime={note.date}>{note.date}</time> · {note.category}{note.updated && note.updated !== note.date && <> · 更新 <time datetime={note.updated}>{note.updated}</time></>}</span><span class="project-mark" aria-hidden="true">↗</span></div>
   <h3><a href={note.url}>{note.title}</a></h3>
   <p>{note.description}</p>
   <ul class="project-tags">{note.tags.map((tag) => <li>{tag}</li>)}</ul>

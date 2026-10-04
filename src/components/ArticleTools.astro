@@ -1,0 +1,59 @@
+<dialog id="image-preview" aria-label="图片预览">
+  <div class="image-toolbar"><a id="image-download" class="button">下载原图 ↓</a><button class="button" type="button" id="image-close" autofocus>关闭 ×</button></div>
+  <img id="preview-image" alt="" />
+  <p id="image-caption" class="note-meta"></p>
+  <p id="image-download-hint" class="note-meta" hidden>外部图片将打开原图，可在原图上另存为。</p>
+</dialog>
+<script>
+  const dialog = document.querySelector<HTMLDialogElement>('#image-preview')!;
+  const preview = document.querySelector<HTMLImageElement>('#preview-image')!;
+  const download = document.querySelector<HTMLAnchorElement>('#image-download')!;
+  document.querySelector('#image-close')!.addEventListener('click', () => dialog.close());
+  dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
+  document.querySelectorAll<HTMLImageElement>('.prose img').forEach((img) => {
+    const button = document.createElement('button');
+    button.type = 'button'; button.className = 'image-zoom';
+    button.setAttribute('aria-label', `放大图片：${img.alt || '文章图片'}`);
+    // Keep linked images' original navigation available without nesting interactive controls.
+    const linked = img.closest('a');
+    if (linked) { linked.after(button); button.textContent = '放大图片'; }
+    else { img.before(button); button.append(img); }
+    button.addEventListener('click', () => {
+      preview.src = img.currentSrc || img.src; preview.alt = img.alt;
+      document.querySelector('#image-caption')!.textContent = img.alt;
+      download.href = preview.src;
+      const local = new URL(preview.src).origin === location.origin;
+      if (local) { download.download = new URL(preview.src).pathname.split('/').pop() || 'image'; download.removeAttribute('target'); download.textContent = '下载原图 ↓'; }
+      else { download.removeAttribute('download'); download.target = '_blank'; download.rel = 'noopener noreferrer'; download.textContent = '打开原图 ↗'; }
+      (document.querySelector('#image-download-hint') as HTMLElement).hidden = local;
+      dialog.showModal();
+    });
+  });
+  document.querySelectorAll<HTMLElement>('.prose pre').forEach((pre) => {
+    const code = pre.querySelector('code');
+    if (!code) return;
+    const wrapper = document.createElement('div'); wrapper.className = 'code-block';
+    pre.before(wrapper); wrapper.append(pre);
+    const button = document.createElement('button'); button.type = 'button'; button.className = 'button code-copy'; button.textContent = '复制代码';
+    const status = document.createElement('span'); status.className = 'sr-only'; status.setAttribute('role', 'status');
+    wrapper.append(button, status);
+    button.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(code.textContent || ''); button.textContent = '已复制 ✓'; status.textContent = '代码已复制'; }
+      catch { button.textContent = '复制失败'; status.textContent = '请手动选择代码复制'; }
+      setTimeout(() => { button.textContent = '复制代码'; status.textContent = ''; }, 2000);
+    });
+  });
+</script>
+<style is:global>
+  .image-zoom { display: block; max-width: 100%; padding: 0; margin: 24px auto; background: transparent; border: 0; color: var(--accent); cursor: zoom-in; }
+  .prose .image-zoom img { margin: 0; }
+  #image-preview { width: min(1100px, 94vw); max-height: 92vh; border: 1px solid var(--border); border-radius: 20px; padding: 20px; background: var(--surface); color: var(--text); overflow: auto; }
+  #image-preview::backdrop { background: rgb(0 0 0 / 75%); backdrop-filter: blur(8px); }
+  .image-toolbar { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-bottom: 16px; }
+  .image-toolbar button { cursor: pointer; }
+  #preview-image { display: block; max-width: 100%; max-height: 70vh; object-fit: contain; margin: auto; border-radius: 10px; }
+  #image-caption { text-align: center; overflow-wrap: anywhere; }
+  .code-block { position: relative; }
+  .prose .code-block pre { padding-top: 58px; }
+  .code-copy { position: absolute; top: 9px; right: 9px; padding: 6px 12px; cursor: pointer; font-size: 12px; }
+</style>

@@ -13,6 +13,11 @@ import GithubSlugger from 'github-slugger';
 
 const slash = (value) => value.replaceAll('\\', '/');
 const plain = (node) => node.value ?? (node.children || []).map(plain).join('');
+function noteDate(value, file, field) {
+  const date = value instanceof Date ? value.toISOString().slice(0, 10) : String(value || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date)) || new Date(date).toISOString().slice(0, 10) !== date) throw new Error(`${file}: ${field} 应为有效的 YYYY-MM-DD`);
+  return date;
+}
 async function files(root, prefix = '') {
   const entries = await readdir(path.join(root, prefix), { withFileTypes: true });
   const nested = await Promise.all(entries.filter((entry) => !entry.name.startsWith('.')).map((entry) => {
@@ -29,10 +34,11 @@ export async function buildNotes(root = path.resolve('content/notes')) {
     const { data, content } = matter(await readFile(path.join(root, file), 'utf8'));
     if (data.publish !== true || data.draft === true) continue;
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(data.slug || '')) throw new Error(`${file}: 请设置唯一的英文 slug`);
-    const date = data.date instanceof Date ? data.date.toISOString().slice(0, 10) : String(data.date || '');
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date))) throw new Error(`${file}: date 应为 YYYY-MM-DD`);
+    const date = noteDate(data.date, file, 'date');
+    const updated = data.updated === undefined ? undefined : noteDate(data.updated, file, 'updated');
+    if (updated && updated < date) throw new Error(`${file}: updated 不能早于 date`);
     if (data.tags !== undefined && (!Array.isArray(data.tags) || data.tags.some((tag) => typeof tag !== 'string'))) throw new Error(`${file}: tags 应为文字数组`);
-    notes.push({ file, slug: data.slug, title: String(data.title || path.basename(file, '.md')), description: String(data.description || ''), date,
+    notes.push({ file, slug: data.slug, title: String(data.title || path.basename(file, '.md')), description: String(data.description || ''), date, updated,
       category: String(data.category || '技术笔记'), tags: data.tags || [], aliases: Array.isArray(data.aliases) ? data.aliases.filter((x) => typeof x === 'string') : [],
       url: `/blog/${data.slug}/`, content, links: [], headings: [], hasMermaid: false });
   }
@@ -162,4 +168,9 @@ export function getNotes() {
 
 export function searchRecords(notes) {
   return notes.map(({ slug, title, description, tags, category, searchText }) => ({ slug, title, description, tags, category, body: searchText }));
+}
+
+export function downloadNote(note) {
+  const { title, slug, date, updated, description, category, tags } = note;
+  return matter.stringify(note.content, { title, slug, date, ...(updated ? { updated } : {}), description, category, tags, publish: true });
 }

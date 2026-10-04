@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { buildNotes, searchRecords } from '../src/lib/notes.mjs';
+import { buildNotes, searchRecords, downloadNote } from '../src/lib/notes.mjs';
 import { createSearch } from '../src/lib/blog-search.mjs';
 
 test('公开示例支持链接、目录、图片、公式和反向链接', async () => {
@@ -82,5 +82,24 @@ test('notes 下支持多级目录，分类独立于目录结构', async () => {
     assert.equal(notes[0].category, '自定义分类');
     assert.equal(notes[0].url, '/blog/nested-note/');
     assert.equal(notes[0].searchText, '深层目录内容');
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test('更新时间有效且不早于发布，Markdown 下载保留正文并仅导出公开字段', async () => {
+  const root = await mkdtemp(path.join(tmpdir(), 'miraitowa-dates-'));
+  try {
+    const file = path.join(root, '文章.md');
+    const source = (updated) => `---\nslug: updated-note\ndate: 2026-10-04\nupdated: ${updated}\npublish: true\ninternal: 不应导出\n---\n# 正文\n\n代码与 ![[缺失.png]]`;
+    await writeFile(file, source('2026-10-05'));
+    const { notes } = await buildNotes(root);
+    assert.equal(notes[0].updated, '2026-10-05');
+    const output = downloadNote(notes[0]);
+    assert.ok(output.includes(notes[0].content.trim()));
+    assert.match(output, /updated:.*2026-10-05/);
+    assert.doesNotMatch(output, /internal|不应导出/);
+    await writeFile(file, source('2026-10-03'));
+    await assert.rejects(buildNotes(root), /不能早于/);
+    await writeFile(file, source("'2026-02-30'"));
+    await assert.rejects(buildNotes(root), /有效的/);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
