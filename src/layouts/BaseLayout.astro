@@ -1,5 +1,6 @@
 ---
 import { site } from '../config/site';
+import ProfileSidebar from '../components/ProfileSidebar.astro';
 import '../styles/global.css';
 
 interface Props {
@@ -16,21 +17,40 @@ const { title, description = site.description } = Astro.props;
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title} · {site.name}</title>
+    <script is:inline>
+      (() => {
+        let theme = 'system';
+        try { theme = localStorage.getItem('miraitowa-theme') || 'system'; } catch {}
+        if (!['light', 'dark', 'system'].includes(theme)) theme = 'system';
+        document.documentElement.dataset.theme = theme;
+      })();
+    </script>
   </head>
   <body>
     <a class="skip-link" href="#main">跳转到主要内容</a>
-    <header class="site-header container">
-      <a class="brand" href="/">{site.name}<span class="brand-dot">.</span></a>
+    <header class="site-header container glass">
+      <a class="brand" href="/"><span class="brand-symbol" aria-hidden="true">m.</span>{site.name}</a>
       <nav aria-label="主导航">
         {site.navigation.map(({ label, href }) => (
           <a href={href} aria-current={Astro.url.pathname === href ? 'page' : undefined}>{label}</a>
         ))}
       </nav>
+      <label class="theme-control"><span class="sr-only">网站主题</span><select id="theme-select" aria-label="网站主题"><option value="system">默认主题</option><option value="light">浅色主题</option><option value="dark">深色主题</option></select></label>
     </header>
-    <main id="main" class="container"><slot /></main>
+    <div class="site-shell container"><ProfileSidebar /><main id="main" class="page-content"><slot /></main></div>
     <footer class="site-footer container">
-      <span>© {new Date().getFullYear()} {site.name}</span>
+      <span>© {new Date().getFullYear()} {site.name} · 学习 / 实践 / 分享</span>
       <a href={site.github}>GitHub ↗</a>
     </footer>
+    <script>
+      const select = document.querySelector<HTMLSelectElement>('#theme-select');
+      if (select) {
+        select.value = document.documentElement.dataset.theme || 'system';
+        select.addEventListener('change', () => {
+          document.documentElement.dataset.theme = select.value;
+          try { localStorage.setItem('miraitowa-theme', select.value); } catch {}
+        });
+      }
+    </script>
   </body>
 </html>

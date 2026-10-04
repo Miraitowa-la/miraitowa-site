@@ -1,0 +1,20 @@
+---
+import { site } from '../config/site';
+import { projects } from '../data/projects';
+const categories = [...new Set(projects.map((project) => project.category))];
+---
+<aside class="profile-sidebar" aria-label="作者与技术方向">
+  <section class="profile-panel glass">
+    <div class="profile-cover" aria-hidden="true"><span class="profile-monogram">M<span>.</span></span><span class="cover-caption">MAKE / LEARN / SHARE</span></div>
+    <div class="profile-info">
+      <h2>{site.name}</h2><span class="profile-rule" aria-hidden="true"></span>
+      <p>{site.description}</p><span class="profile-role">嵌入式 · 硬件 · 开源</span>
+      <div class="profile-links"><a href={site.github}>GitHub ↗</a><a href="/about/">关于我 →</a></div>
+    </div>
+  </section>
+  <section class="sidebar-panel glass">
+    <h2 class="accent-heading">项目方向</h2>
+    <ul class="category-list">{categories.map((category, index) => <li><a href={`/projects/#category-${index}`}><span>{category}</span><span class="category-count">{projects.filter((project) => project.category === category).length}</span></a></li>)}</ul>
+  </section>
+  <section class="sidebar-panel glass"><h2 class="accent-heading">技术关键词</h2><div class="topics"><span>ESP32</span><span>STM32</span><span>Python</span><span>IoT</span><span>PCB</span><span>开源</span></div></section>
+</aside>

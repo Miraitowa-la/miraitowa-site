@@ -24,6 +24,8 @@ npm run preview
 
 - `src/config/site.ts`：网站名称、简介、GitHub 和导航。
 - `src/layouts/BaseLayout.astro`：共享 HTML、导航和页脚。
+- `src/components/ProfileSidebar.astro`：个人信息、项目分类和技术关键词侧栏。
+- `src/components/ProjectCard.astro`：首页和项目页共用的项目卡片。
 - `src/pages/index.astro`：主页。
 - `src/pages/[section].astro`：静态生成博客和关于占位页面。
 - `src/pages/projects.astro`：按方向展示公开项目。
@@ -59,9 +61,11 @@ npm run deploy
 
 ## 后续
 
+当前视觉采用灰蓝色圆角卡片与局部毛玻璃。桌面使用个人侧栏，移动端重排为单栏。导航主题选择支持浅色、深色和默认（跟随系统），保存于浏览器本地；配色集中在 `src/styles/global.css`，不支持背景模糊的浏览器使用半透明面板回退。
+
 项目内容根据 GitHub 公开仓库简介与 README 整理，核对日期为 2026-10-04。私有仓库不在展示范围内。列表为本地静态数据，不会自动同步；新增或修改项目请编辑 `src/data/projects.ts`，更新后构建并推送。历史项目单独分组，项目主页仅在已知链接时提供。
 
-流程验证后再增加 Content Collections、Markdown / MDX、文章阅读页、主题切换、SEO、RSS、Sitemap、Pagefind 与 Giscus。本 Demo 暂未实现这些功能，也没有虚构项目或文章内容。
+流程验证后再增加 Content Collections、Markdown / MDX、文章阅读页、SEO、RSS、Sitemap、Pagefind 与 Giscus。本 Demo 暂未实现这些功能，也没有虚构项目或文章内容。
 
 ## 许可证
 

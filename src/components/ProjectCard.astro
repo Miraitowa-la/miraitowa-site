@@ -1,0 +1,12 @@
+---
+import type { Project } from '../data/projects';
+interface Props { project: Project; }
+const { project } = Astro.props;
+---
+<article class="project-card">
+  <div class="project-card-top"><span class="project-category">{project.category}</span><span class="project-mark" aria-hidden="true">↗</span></div>
+  <h3><a href={project.github}>{project.name}</a></h3>
+  <p>{project.description}</p>
+  <ul class="project-tags" aria-label="技术标签">{project.tags.map((tag) => <li>{tag}</li>)}</ul>
+  <div class="project-links"><a href={project.github} aria-label={`查看 ${project.name} GitHub 仓库`}>源代码 ↗</a>{project.website && <a href={project.website} aria-label={`访问 ${project.name} 项目主页`}>项目主页 ↗</a>}</div>
+</article>

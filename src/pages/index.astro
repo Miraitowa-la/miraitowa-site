@@ -1,6 +1,9 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { site } from '../config/site';
+import ProjectCard from '../components/ProjectCard.astro';
+import { projects } from '../data/projects';
+const featured = projects.filter((project) => ['NexLink', 'WireLink-Studio'].includes(project.name));
 
 const sections = [
   { number: '01', title: '技术博客', description: '记录学习笔记与开发过程。', href: '/blog/' },
@@ -9,16 +12,17 @@ const sections = [
 ];
 ---
 <BaseLayout title="首页">
-  <section class="hero">
+  <section class="hero surface">
     <p class="eyebrow">个人技术主页 / PERSONAL SPACE</p>
-    <h1>你好，我是 <span>{site.name}。</span><br />在实践中探索技术。</h1>
-    <p class="hero-description">{site.description}<br />关注嵌入式、硬件开发与开源。</p>
+    <h1>保持好奇，<br /><span>让想法落地。</span></h1>
+    <p class="hero-description">你好，我是 {site.name}。<br />从电路到代码，记录每一次技术探索。</p>
     <div class="actions">
-      <a class="button primary" href="/blog/">进入博客 <span aria-hidden="true">→</span></a>
+      <a class="button primary" href="/projects/">探索项目 <span aria-hidden="true">→</span></a>
       <a class="button" href={site.github}>访问 GitHub ↗</a>
     </div>
     <div class="topics" aria-label="技术方向"><span>嵌入式</span><span>硬件开发</span><span>开源</span></div>
   </section>
+  <section class="featured" aria-labelledby="featured-title"><div class="section-heading"><h2 id="featured-title" class="accent-heading">精选项目</h2><a href="/projects/">查看全部 →</a></div><div class="project-grid">{featured.map((project) => <ProjectCard project={project} />)}</div></section>
   <section class="explore" aria-labelledby="explore-title">
     <div class="section-heading"><h2 id="explore-title">从这里开始</h2><span>学习 · 实践 · 分享</span></div>
     <div class="cards">

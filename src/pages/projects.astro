@@ -2,31 +2,24 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { projects } from '../data/projects';
 import { site } from '../config/site';
+import ProjectCard from '../components/ProjectCard.astro';
 
 const categories = [...new Set(projects.map((project) => project.category))];
 ---
 <BaseLayout title="开源项目" description="嵌入式通信、物联网应用与 Web 工具：浏览 Miraitowa 的公开项目和源代码。">
-  <section class="projects-intro">
+  <section class="projects-intro surface">
     <p class="eyebrow">从想法到实现 / OPEN PROJECTS</p>
     <h1>开源项目</h1>
     <p>从底层通信到应用工具，记录我在实践中的探索。<br />在 GitHub 查看源代码、使用说明与最新进展。</p>
     <div class="actions"><a class="button" href={`${site.github}?tab=repositories`}>全部 GitHub 仓库 ↗</a></div>
   </section>
   <div class="project-groups">
-    {categories.map((category) => (
-      <section class="project-group" aria-label={category}>
-        <div class="section-heading"><h2>{category}</h2><span>{projects.filter((project) => project.category === category).length} 个项目</span></div>
+    {categories.map((category, index) => (
+      <section class="project-group" id={`category-${index}`} aria-label={category}>
+        <div class="section-heading"><h2 class="accent-heading">{category}</h2><span>{projects.filter((project) => project.category === category).length} 个项目</span></div>
         <div class="project-grid">
           {projects.filter((project) => project.category === category).map((project) => (
-            <article class="project-card">
-              <h3><a href={project.github}>{project.name}</a></h3>
-              <p>{project.description}</p>
-              <ul class="project-tags" aria-label="技术标签">{project.tags.map((tag) => <li>{tag}</li>)}</ul>
-              <div class="project-links">
-                <a href={project.github} aria-label={`查看 ${project.name} GitHub 仓库`}>源代码 ↗</a>
-                {project.website && <a href={project.website} aria-label={`访问 ${project.name} 项目主页`}>项目主页 ↗</a>}
-              </div>
-            </article>
+            <ProjectCard project={project} />
           ))}
         </div>
       </section>
